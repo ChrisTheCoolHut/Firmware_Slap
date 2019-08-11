@@ -4,6 +4,7 @@ Firmware slap combines concolic analysis with function clustering for vulnerabil
 
 ![Firmware Slap](https://i.imgur.com/fxIIogI.gif)
 
+Slides from the talk can be found [here](https://media.defcon.org/DEF%20CON%2027/DEF%20CON%2027%20presentations/DEFCON-27-Christopher-Roberts-Firmware-Slap.pdf)
 
 ## Setup
 
