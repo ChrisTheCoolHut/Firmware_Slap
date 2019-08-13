@@ -9,12 +9,12 @@ Slides from the talk can be found [here](https://media.defcon.org/DEF%20CON%2027
 ## Setup
 
 Firmware slap should be run in a virtual environment. It has been tested on Python3.6
-```
+```bash
 python setup.py install
 ```
 
 You will need rabbitmq and (radare2 or Ghidra)
-```
+```bash
 # Ubuntu
 sudo apt install rabbitmq-server
 # OSX
@@ -29,14 +29,20 @@ unzip ghidra_9.0.4_PUBLIC_20190516.zip -d ghidra
 echo "export PATH=\$PATH:$PWD/ghidra/ghidra_9.0.4/support" >> ~/.bashrc
 ```
 
+Ghidra requires JDK 11.
+```bash
+sudo apt install default-jdk
+java --version
+```
+
 If you want to use the Elastic search stuff run the `Elasticsearch_and_kibana.sh` script
 
 ## Quickstart
 
 Ensure rabbitmq-server is running.
 
-```
-# In a Separate terminal
+```bash
+# In a Separate terminal, run this in the top level "Firmware_Slap" directory
 celery -A firmware_slap.celery_tasks worker --loglevel=info
 # Basic buffer overflow
 Discover_And_Dump.py examples/iwconfig -D iwconfig_results
@@ -47,14 +53,14 @@ Vuln_Discover_Celery.py examples/upload.cgi -L Almond_Root/lib/
 
 ## Usage
 
-```
+```bash
 # Get the firmware used for examples
 wget https://firmware.securifi.com/AL3_64MB/AL3-R024-64MB
 binwalk -Mre AL3-R024-64MB
 ```
 
 Start a celery work from the project root directory:
-```
+```bash
 # In a separate terminal
 celery -A firmware_slap.celery_tasks worker --loglevel=info
 ```
@@ -136,7 +142,7 @@ Out[4]: {'base': '0x7ffefde8', 'type': 'char *', 'value': '/bin/mtd_write -o 0 -
 
 ### Sample Vulnerability Cluster Script
 The vulnerability cluster script will attempt to discover vulnerabilities using the method in the Sample Vulnerability Discovery script and then build k-means clusters of a set of given functions across an extracted firmware to find similar functions to vulnerable ones.
-```
+```bash
 $ Vuln_Cluster_Celery.py -h
 usage: Vuln_Cluster_Celery.py [-h] [-L LD_PATH] [-F FUNCTION] [-V VULN_PICKLE]
                               Directory
@@ -155,7 +161,7 @@ optional arguments:
 The below command takes -F as a known vulnerable function. -V as a dumped pickle from a previous run  to not need to discover new vulnerabilites and -L for the library path.
 A sample usage:
 
-```
+```bash
 $ python Vuln_Cluster_Celery.py -F mtd_write_firmware -L Almond_Root/lib/ Almond_Root/etc_ro/lighttpd/www/cgi-bin/
 [+] Reading Files
 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00,  2.80it/s]
