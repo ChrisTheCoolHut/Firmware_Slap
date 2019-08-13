@@ -20,10 +20,15 @@ import .lib.firmware_clustering as fc
 '''
 
 limited_processes = []
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("Directory")
-    parser.add_argument("-L", "--LD_PATH", default="", help="Path to libraries to load")
+    parser.add_argument("-L",
+                        "--LD_PATH",
+                        default="",
+                        help="Path to libraries to load")
     parser.add_argument("-F", "--Function", default="")
     parser.add_argument("-V", "--Vuln_Pickle", default="")
 
@@ -38,7 +43,7 @@ def main():
     m_pool = Pool()
 
     print("Getting functions from executables")
-    for x,y in zip(m_pool.map(fh.get_arg_funcs, all_files), all_files):
+    for x, y in zip(m_pool.map(fh.get_arg_funcs, all_files), all_files):
         for func in x:
             func['file_name'] = y
             all_arg_funcs.append(func)
@@ -47,12 +52,13 @@ def main():
     m_pool.join()
 
     if args.Vuln_Pickle is "":
-        cores = psutil.cpu_count() -1
-        mem_limit = (psutil.virtual_memory()[1] / (1024*1024)) / cores
+        cores = psutil.cpu_count() - 1
+        mem_limit = (psutil.virtual_memory()[1] / (1024 * 1024)) / cores
 
-        vulns = get_vulnerabilities(all_arg_funcs, cores, mem_limit, args.LD_PATH)
+        vulns = get_vulnerabilities(all_arg_funcs, cores, mem_limit,
+                                    args.LD_PATH)
 
-        with open("Directory_Vulnerabilities",'wb') as f:
+        with open("Directory_Vulnerabilities", 'wb') as f:
             pickle.dump(vulns, f, -1)
     else:
         print("[+] Loading from pickle file {}".format(args.Vuln_Pickle))
@@ -62,12 +68,16 @@ def main():
     print("[+] Getting sparse functions")
 
     all_functions = fhc.get_firmware_sparse(all_files)
-    bad_prefix = ["fcn.", "sub.", "loc.", "aav.",
-                  "sym._fini", "sym._init"]
+    bad_prefix = ["fcn.", "sub.", "loc.", "aav.", "sym._fini", "sym._init"]
 
-    all_functions = [x for x in all_functions if not any([y in x['name'] for y in bad_prefix])]
+    all_functions = [
+        x for x in all_functions
+        if not any([y in x['name'] for y in bad_prefix])
+    ]
 
-    bad_features = ['bits', 'calltype', 'maxbound', 'minbound', 'offset', 'size']
+    bad_features = [
+        'bits', 'calltype', 'maxbound', 'minbound', 'offset', 'size'
+    ]
     for func in all_functions:
         for feat in bad_features:
             func.pop(feat)
@@ -89,7 +99,9 @@ def main():
         file_name = func_ident.split(':')[0].rstrip(' ')
         func_name = func_ident.split(':')[1].lstrip(' ')
         try:
-            label = list(filter(lambda x: x[0] in file_name and x[1] in func_name, clust_group))[0]
+            label = list(
+                filter(lambda x: x[0] in file_name and x[1] in func_name,
+                       clust_group))[0]
             vuln_labels[label[2]] = func_ident
         except:
             pass
@@ -103,22 +115,24 @@ def main():
         #print(test,test2)
         if z in vuln_labels.keys() and test:
             x = x.split('/')[-1]
-            print("{:<30} | {:<30} | {} -> {}".format(x,y,z, vuln_labels[z]))
+            print("{:<30} | {:<30} | {} -> {}".format(x, y, z, vuln_labels[z]))
 
 
 def get_vulnerabilities(file_functions, cores=1, mem_limit=2048, ld_path=""):
-    func_iter       = 0
-    func_timeout    = 120
+    func_iter = 0
+    func_timeout = 120
     vulnerabilities = {}
     global limited_process
 
-    while func_iter != len(file_functions) -1:
-        while len(limited_processes) < cores and len(file_functions) > 0 and func_iter < len(file_functions):
+    while func_iter != len(file_functions) - 1:
+        while len(limited_processes) < cores and len(
+                file_functions) > 0 and func_iter < len(file_functions):
             proc_queue = Queue()
             m_data = (file_functions[func_iter], proc_queue, ld_path)
             p = Process(target=fa.trace_function, args=m_data)
             p.start()
-            my_proc = Limited_Process(p, file_functions[func_iter], func_timeout, mem_limit, proc_queue)
+            my_proc = Limited_Process(p, file_functions[func_iter],
+                                      func_timeout, mem_limit, proc_queue)
             limited_processes.append(my_proc)
             print("Starting {}".format(file_functions[func_iter]['name']))
             func_iter += 1
@@ -130,29 +144,34 @@ def get_vulnerabilities(file_functions, cores=1, mem_limit=2048, ld_path=""):
             result = lim_proc.get()
 
             #Process returned!
-            if result is not None and type(result) is not "str" and result is not "timeout":
-                print("{} {} : {}".format(lim_proc.function['file_name'], lim_proc.function['name'], result))
-                vuln_key = "{} : {}".format(lim_proc.function['file_name'], lim_proc.function['name'])
+            if result is not None and type(
+                    result) is not "str" and result is not "timeout":
+                print("{} {} : {}".format(lim_proc.function['file_name'],
+                                          lim_proc.function['name'], result))
+                vuln_key = "{} : {}".format(lim_proc.function['file_name'],
+                                            lim_proc.function['name'])
                 vuln_value = ""
                 if "vulnerable" in result.stashes.keys():
-                    print("[+] Memory Corruption {}".format(lim_proc.function['name']))
+                    print("[+] Memory Corruption {}".format(
+                        lim_proc.function['name']))
                     path = result.stashes['vulnerable'][0]
                     if path.globals['args']:
                         print_format = "{:<16} : {:<15} | {}"
                         print("[+] Function Arguments")
-                        print(print_format.format("Arg Location", "Arg Type", "Arg Value"))
+                        print(
+                            print_format.format("Arg Location", "Arg Type",
+                                                "Arg Value"))
 
-                    for x,y,z in path.globals['args']:
+                    for x, y, z in path.globals['args']:
                         value = fa.unravel(y, z, path)
-                        print("{} : {:<5} | {}".format(x['ref'],
-                            str(y),
-                            value))
-                        vuln_value += "{} : {:<5} | {}".format(x['ref'],
-                            str(y),
-                            value)
+                        print("{} : {:<5} | {}".format(x['ref'], str(y),
+                                                       value))
+                        vuln_value += "{} : {:<5} | {}".format(
+                            x['ref'], str(y), value)
                     fa.display_corruption_location(path)
 
-                elif "exploitable" in result.stashes.keys() and len(result.stashes['exploitable']) > 0:
+                elif "exploitable" in result.stashes.keys() and len(
+                        result.stashes['exploitable']) > 0:
                     path = result.stashes['exploitable'][0]
                     val_loc = path.globals['val_offset']
                     val_addr = path.globals['val_addr']
@@ -162,22 +181,21 @@ def get_vulnerabilities(file_functions, cores=1, mem_limit=2048, ld_path=""):
                     if path.globals['args']:
                         print_format = "{:<16} : {:<15} | {}"
                         print("[+] Function Arguments")
-                        print(print_format.format("Arg Location", "Arg Type", "Arg Value"))
+                        print(
+                            print_format.format("Arg Location", "Arg Type",
+                                                "Arg Value"))
 
-                    for x,y,z in path.globals['args']:
+                    for x, y, z in path.globals['args']:
                         value = fa.unravel(y, z, path)
-                        print("{} : {:<5} | {}".format(x['ref'],
-                            str(y),
-                            value))
-                        vuln_value += "{} : {:<5} | {}".format(x['ref'],
-                            str(y),
-                            value)
+                        print("{} : {:<5} | {}".format(x['ref'], str(y),
+                                                       value))
+                        vuln_value += "{} : {:<5} | {}".format(
+                            x['ref'], str(y), value)
                     print("[+] Command Injected memory location:")
                     temp = fa.unravel(None, val_addr, path)
                     fa.pretty_print(solved_addr, "char *", temp)
                     fa.display_corruption_location(path)
                 vulnerabilities[vuln_key] = vuln_value
-
 
                 #file_functions.remove(lim_proc.function)
                 to_remove.append(lim_proc)
@@ -195,7 +213,7 @@ def get_vulnerabilities(file_functions, cores=1, mem_limit=2048, ld_path=""):
         #Remove processes
         for lim_proc in to_remove:
             limited_processes.remove(lim_proc)
-    return vulnerabilities 
+    return vulnerabilities
 
 
 if __name__ == "__main__":

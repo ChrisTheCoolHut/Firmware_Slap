@@ -9,10 +9,12 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import Normalizer
 from sklearn.cluster import KMeans
 
+
 def funcs_to_sparse(func_list):
     vectorizor = DictVectorizer()
     func_sparse = vectorizor.fit_transform(func_list)
     return vectorizor, func_sparse
+
 
 def trim_funcs(func_list, file_name=""):
 
@@ -24,15 +26,16 @@ def trim_funcs(func_list, file_name=""):
         if 'file_name' not in func.keys():
             func['file_name'] = file_name
 
-        trim_import = True 
+        trim_import = True
         if trim_import:
             if "sym.imp" in func['name']:
                 to_remove.append(func)
                 continue
-        only_symbols = True 
+        only_symbols = True
         if only_symbols:
-            bad_prefix = ["fcn.", "sub.", "loc.", "aav.",
-                    "sym._fini", "sym._init"]
+            bad_prefix = [
+                "fcn.", "sub.", "loc.", "aav.", "sym._fini", "sym._init"
+            ]
             if any([x in func['name'] for x in bad_prefix]):
                 to_remove.append(func)
                 continue
@@ -43,7 +46,8 @@ def trim_funcs(func_list, file_name=""):
 
                 if use_call_type:
                     #Define jump or call
-                    my_str = str(ref['addr']) + str(ref['at']) + str(ref['type'])
+                    my_str = str(ref['addr']) + str(ref['at']) + str(
+                        ref['type'])
                 else:
                     #Ignore ref type
                     my_str = str(ref['addr']) + str(ref['at'])
@@ -56,7 +60,8 @@ def trim_funcs(func_list, file_name=""):
             for ref in func['callrefs']:
                 if use_call_type:
                     #Define jump or call
-                    my_str = str(ref['addr']) + str(ref['at']) + str(ref['type'])
+                    my_str = str(ref['addr']) + str(ref['at']) + str(
+                        ref['type'])
                 else:
                     #Ignore ref type
                     my_str = str(ref['addr']) + str(ref['at'])
@@ -67,16 +72,16 @@ def trim_funcs(func_list, file_name=""):
         #bpvars
         if "bpvars" in func.keys():
             for bpvar in func['bpvars']:
-                kind    = bpvar['kind']
-                ref     = str(bpvar['ref']['base']) + str(bpvar['ref']['offset'])
-                v_type  = bpvar['type']
+                kind = bpvar['kind']
+                ref = str(bpvar['ref']['base']) + str(bpvar['ref']['offset'])
+                v_type = bpvar['type']
                 my_str = kind + ref + v_type
                 func[my_str] = 1
             func.pop('bpvars')
 
         remove_list = []
         #Everything else
-        for k,v in func.items():
+        for k, v in func.items():
             if type(v) == list:
                 remove_list.append(k)
                 #func.pop(k)
@@ -91,7 +96,6 @@ def trim_funcs(func_list, file_name=""):
     return func_list
 
 
-
 def test():
     parser = argparse.ArgumentParser()
 
@@ -99,8 +103,8 @@ def test():
 
     args = parser.parse_args()
 
-    info = fh.get_function_information(args.File) 
-    #info = fh.get_arg_funcs(args.File) 
+    info = fh.get_function_information(args.File)
+    #info = fh.get_arg_funcs(args.File)
 
     info = trim_funcs(info, args.File)
 
@@ -117,7 +121,7 @@ def test():
 
     scores = []
     clust_count = []
-    for x in range(2,20):
+    for x in range(2, 20):
         result = KMeans(n_clusters=x, random_state=2).fit(func_sparse)
 
         score = silhouette_score(func_sparse, result.labels_, metric="cosine")
@@ -125,7 +129,7 @@ def test():
         clust_count.append(x)
 
         print("Clusters {:<3} | Silhoette Score : {}".format(x, score))
-    
+
     plt.plot(clust_count, scores)
     plt.xlabel("Cluster Centroid Count")
     plt.ylabel("Silhoette Score")
@@ -133,6 +137,7 @@ def test():
     plt.show()
 
     pass
+
 
 if __name__ == "__main__":
     test()

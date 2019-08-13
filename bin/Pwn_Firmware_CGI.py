@@ -1,6 +1,5 @@
 from celery import Celery
 
-
 from firmware_slap.function_analyzer import *
 from firmware_slap.celery_tasks import *
 from firmware_slap import function_handler as fh
@@ -23,10 +22,11 @@ for log in log_things:
     logger.disabled = True
     logger.propagate = False
 
-use_ghidra = True 
+use_ghidra = True
 use_elastic = False
 es = None
 binwalk_cmd = "binwalk -Mre {}"
+
 
 def main():
 
@@ -44,6 +44,7 @@ def main():
 
     shutil.rmtree(dirpath)
 
+
 def extract_file(file_name, work_dir):
 
     print("[+] Extracting {}".format(file_name))
@@ -59,10 +60,7 @@ def extract_file(file_name, work_dir):
     print(cmd)
     print("Extracting Firmware into {}".format(work_dir))
     from subprocess import DEVNULL
-    subprocess.check_call(cmd,
-                        cwd=work_dir,
-                        shell=True,
-                        stdout=DEVNULL)
+    subprocess.check_call(cmd, cwd=work_dir, shell=True, stdout=DEVNULL)
 
     root_fs_folder = None
     for root, subdirs, files in os.walk(work_dir):
@@ -76,7 +74,8 @@ def extract_file(file_name, work_dir):
 
                 # Check to see if common rootfs folder are there
                 if all([x in dir_contents for x in root_fs_contents]):
-                    print("[+] root file system discovered at {}".format(full_path))
+                    print("[+] root file system discovered at {}".format(
+                        full_path))
                     root_fs_folder = full_path
                     break
 
@@ -105,11 +104,13 @@ def process_file_or_folder(file_path, work_dir):
     root_fs = extract_file(file_path, work_dir)
 
     if root_fs is None:
-        raise RuntimeError("Could not locate root filesystem for {}".format(file_path))
+        raise RuntimeError(
+            "Could not locate root filesystem for {}".format(file_path))
 
     ld_path = get_libraries(root_fs, work_dir)
 
     return get_vulnerabilities_directory(root_fs, ld_path)
+
 
 def get_vulnerabilities_directory(folder_name, ld_path):
 
@@ -128,6 +129,7 @@ def get_vulnerabilities_directory(folder_name, ld_path):
 
     return get_bugs_from_functions(all_arg_funcs, ld_path)
 
+
 def fix_functions(all_arg_funcs):
     exclude_list = []
     for func in all_arg_funcs:
@@ -139,14 +141,15 @@ def fix_functions(all_arg_funcs):
         func['file_path'] = func['file_name']
         func['file_name'] = os.path.basename(func['file_name'])
 
-        combined_string = func['file_name'] + func['name'] + str(func['offset'])
+        combined_string = func['file_name'] + func['name'] + str(
+            func['offset'])
 
         func_hash = hashlib.md5(combined_string.encode('utf-8')).hexdigest()
 
         func['func_hash'] = func_hash
 
         if use_elastic:
-            res = eh.search_index_hash(es, eh.function_index,  func_hash)
+            res = eh.search_index_hash(es, eh.function_index, func_hash)
             if res and res['hits']['hits']:
                 exclude_list.append(func)
 
@@ -155,15 +158,20 @@ def fix_functions(all_arg_funcs):
 
     return all_arg_funcs
 
+
 def get_all_funcs_async(file_list):
 
     async_group = []
     done_list = []
     for file in file_list:
-        async_group.append(async_get_funcs.apply_async(args=[file],
-            time_limit=3600,))
+        async_group.append(
+            async_get_funcs.apply_async(
+                args=[file],
+                time_limit=3600,
+            ))
 
-    bar = tqdm.tqdm(total=len(async_group), desc="[~] Recovering function prototypes")
+    bar = tqdm.tqdm(total=len(async_group),
+                    desc="[~] Recovering function prototypes")
     while not all([x.ready() for x in async_group]):
         done_count = len([x.ready() for x in async_group if x.ready()])
         bar.update(done_count - bar.n)
@@ -178,10 +186,14 @@ def get_all_arg_funcs_async(file_list):
 
     async_group = []
     for file in file_list:
-        async_group.append(async_get_arg_funcs.apply_async(args=[file],
-            time_limit=3600,))
+        async_group.append(
+            async_get_arg_funcs.apply_async(
+                args=[file],
+                time_limit=3600,
+            ))
 
-    bar = tqdm.tqdm(total=len(async_group), desc="[~] Recovering function prototypes")
+    bar = tqdm.tqdm(total=len(async_group),
+                    desc="[~] Recovering function prototypes")
     while not all([x.ready() for x in async_group]):
         done_count = len([x.ready() for x in async_group if x.ready()])
         bar.update(done_count - bar.n)
@@ -190,8 +202,8 @@ def get_all_arg_funcs_async(file_list):
 
     return [x.get(propagate=False) for x in async_group if not x.failed()]
 
-def check_files(task_list, done_list):
 
+def check_files(task_list, done_list):
 
     for task in task_list:
         if task.ready():
@@ -199,7 +211,10 @@ def check_files(task_list, done_list):
             file_name = item[0]['file_name'].split('/')[-1]
             if file_name not in done_list:
                 done_list.append(file_name)
-                print(colored('Finished {}'.format(file_name), 'white', attrs=['bold']))
+                print(
+                    colored('Finished {}'.format(file_name),
+                            'white',
+                            attrs=['bold']))
     return done_list
 
 
@@ -211,19 +226,20 @@ def get_bugs_from_functions(arg_funcs, ld_path):
         else:
             args = fh.get_func_args(func)
 
-        async_task = async_trace_func.apply_async(args=[func['offset'],
-                                                          args,
-                                                          func['file_path'],
-                                                          ld_path,
-                                                          func['name']],
-                                                    time_limit=120,
-                                                    worker_max_memory_per_child=2048000)
-        func['task']  = async_task
+        async_task = async_trace_func.apply_async(
+            args=[
+                func['offset'], args, func['file_path'], ld_path, func['name']
+            ],
+            time_limit=120,
+            worker_max_memory_per_child=2048000)
+        func['task'] = async_task
         func['posted_results'] = False
 
-    bar = tqdm.tqdm(total=len(arg_funcs), desc="[~] Finding all the vulnerabilities")
+    bar = tqdm.tqdm(total=len(arg_funcs),
+                    desc="[~] Finding all the vulnerabilities")
     while not all([x['task'].ready() for x in arg_funcs]):
-        done_count = len([x['task'].ready() for x in arg_funcs if x['task'].ready()])
+        done_count = len(
+            [x['task'].ready() for x in arg_funcs if x['task'].ready()])
         check_bugs(arg_funcs)
         bar.update(done_count - bar.n)
         time.sleep(1)
@@ -233,6 +249,7 @@ def get_bugs_from_functions(arg_funcs, ld_path):
     #bugs_dict = [x.get(propagate=False) for x in async_group if not x.failed()]
     return arg_funcs
     #return [x for x in bugs_dict if x]
+
 
 # The computer scientist in me hates this function
 def check_bugs(arg_funcs):
@@ -251,45 +268,54 @@ def check_bugs(arg_funcs):
             if failed:
                 func['result'] = None
             elif func['result']:
-                    print_function(func)
-                    make_exploit(func)
+                print_function(func)
+                make_exploit(func)
             func['task'] = task
             func['posted_results'] = True
     return arg_funcs
 
+
 def get_small_function(func):
 
     ret_dict = {
-            'name' : func['name'],
-            'offset' : func['offset'],
-            'file_path' : func['file_path'],
-            'file_name' : func['file_name'],
-            'func_hash' : func['func_hash']
-            }
+        'name': func['name'],
+        'offset': func['offset'],
+        'file_path': func['file_path'],
+        'file_name': func['file_name'],
+        'func_hash': func['func_hash']
+    }
     if "HiFuncProto" in func.keys():
         ret_dict['prototype'] = func['HiFuncProto']
 
     return ret_dict
 
+
 def make_exploit(func):
     print(colored("Generating exploit", 'red', attrs=['bold']))
 
-    print(colored("This is an Almond 3 device. Using Almond 3 web request template",
-        'white', attrs=['bold']))
+    print(
+        colored(
+            "This is an Almond 3 device. Using Almond 3 web request template",
+            'white',
+            attrs=['bold']))
     template_location = "../templates/Almond_Template.py"
 
-    print(colored("Web path CGI bin path to binary /cgi-bin/{}".format(
-        func['file_name']), 'white', attrs=['bold']))
+    print(
+        colored("Web path CGI bin path to binary /cgi-bin/{}".format(
+            func['file_name']),
+                'white',
+                attrs=['bold']))
 
     print(colored("Converting function to page name", 'white', attrs=['bold']))
 
-    page_name = func['name'].replace('set','').replace('_','')
+    page_name = func['name'].replace('set', '').replace('_', '')
     if "cmd" in page_name:
-        page_name = page_name.replace('cmd',"CMD")
+        page_name = page_name.replace('cmd', "CMD")
 
-    print(colored("func : {} -> page : {}".format(
-        func['name'], page_name), 'yellow', attrs=['bold']))
-    
+    print(
+        colored("func : {} -> page : {}".format(func['name'], page_name),
+                'yellow',
+                attrs=['bold']))
 
     exploit_script = ""
     with open(template_location, 'r') as f:
@@ -301,13 +327,15 @@ def make_exploit(func):
             else:
                 exploit_script += line
 
-    file_name = "{}_{}.py".format(
-            func['result']['type'], func['name'])
+    file_name = "{}_{}.py".format(func['result']['type'], func['name'])
 
     with open(file_name, 'w') as f:
         f.write(exploit_script)
 
-    print(colored("Sucessfully generated {}".format(file_name), 'cyan', attrs=['bold']))
+    print(
+        colored("Sucessfully generated {}".format(file_name),
+                'cyan',
+                attrs=['bold']))
 
 
 def print_function(func):
@@ -317,37 +345,44 @@ def print_function(func):
     func_name = func['name']
     bug = func['result']
     bug_type = bug['type']
-    print(colored("{} found in {} at {}".format(
-        bug_type, file_name, func_name), 'red', attrs=['bold']))
+    print(
+        colored("{} found in {} at {}".format(bug_type, file_name, func_name),
+                'red',
+                attrs=['bold']))
 
     import re
-    print(colored(prototype,'cyan', attrs=['bold']))
+    print(colored(prototype, 'cyan', attrs=['bold']))
     for arg in bug['args']:
         data = arg['value']
-        data = re.sub('\\\\x[0-9][0-9]','', data)
-        print(colored("\t{} : {}".format(arg['base'], data),
-            'white', attrs=['bold']))
+        data = re.sub('\\\\x[0-9][0-9]', '', data)
+        print(
+            colored("\t{} : {}".format(arg['base'], data),
+                    'white',
+                    attrs=['bold']))
     if 'Injected_Location' in bug.keys():
         print(colored("Injected Memory Location", 'cyan', attrs=['bold']))
 
         data = bug['Injected_Location']['Data']
-        data = re.sub('\\\\x[0-9][0-9]','', data)
+        data = re.sub('\\\\x[0-9][0-9]', '', data)
 
-        print(colored("\t{}".format(data),
-            'white', attrs=['bold']))
-    print(colored("Tainted memory values",'cyan', attrs=['bold']))
+        print(colored("\t{}".format(data), 'white', attrs=['bold']))
+    print(colored("Tainted memory values", 'cyan', attrs=['bold']))
     for mem_val in bug['mem']:
-        print(colored("{}".format(
-            mem_val['BBL_DESC']['DESCRIPTION']),
-            'yellow', attrs=['bold']))
+        print(
+            colored("{}".format(mem_val['BBL_DESC']['DESCRIPTION']),
+                    'yellow',
+                    attrs=['bold']))
         if 'DATA_ADDRS' in mem_val.keys():
-            print(colored("\tMemory load addr {}".format(
-                mem_val['DATA_ADDRS'][0]),
-                    'white', attrs=['bold']))
-        data = re.sub('\\\\x[0-9][0-9]','', mem_val['DATA'])
-        print(colored("\tMemory load value {}".format(
-            data),
-            'white', attrs=['bold']))
+            print(
+                colored("\tMemory load addr {}".format(
+                    mem_val['DATA_ADDRS'][0]),
+                        'white',
+                        attrs=['bold']))
+        data = re.sub('\\\\x[0-9][0-9]', '', mem_val['DATA'])
+        print(
+            colored("\tMemory load value {}".format(data),
+                    'white',
+                    attrs=['bold']))
         print()
 
 

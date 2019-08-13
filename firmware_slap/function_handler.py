@@ -3,6 +3,7 @@ import argparse
 import IPython
 from tqdm import tqdm
 
+
 def get_function_information(file_name):
     func_list = []
 
@@ -25,7 +26,10 @@ def get_function_information(file_name):
 
 
 def get_arg_funcs(file_name):
-    return [x for x in get_function_information(file_name) if len(x) > 0 and 'nargs' in x.keys() and x['nargs'] > 0]
+    return [
+        x for x in get_function_information(file_name)
+        if len(x) > 0 and 'nargs' in x.keys() and x['nargs'] > 0
+    ]
 
 
 def get_base_addr(file_name):
@@ -55,6 +59,7 @@ def test():
     arg_funcs = [x for x in info if x['nargs'] > 0]
 
     IPython.embed()
+
 
 if __name__ == "__main__":
     test()

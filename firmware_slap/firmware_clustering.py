@@ -16,6 +16,7 @@ from sklearn.metrics.pairwise import cosine_distances
 import os
 import hashlib
 
+
 def get_executable_files(directory, progress=True):
 
     executables = []
@@ -56,15 +57,15 @@ def get_executable_files(directory, progress=True):
                 elif "application/x-executable" in file_type:
                     executables.append(full_path)
 
+    return executables, shared_libs
 
-    return executables,shared_libs
 
 def md5sum(filename):
-    h  = hashlib.md5()
-    b  = bytearray(128*1024)
+    h = hashlib.md5()
+    b = bytearray(128 * 1024)
     mv = memoryview(b)
     with open(filename, 'rb', buffering=0) as f:
-        for n in iter(lambda : f.readinto(mv), 0):
+        for n in iter(lambda: f.readinto(mv), 0):
             h.update(mv[:n])
     return h.hexdigest()
 
@@ -75,9 +76,9 @@ def get_firmware_sparse(file_list):
     m_pool = Pool()
 
     print("[+] Getting Function Information")
-    for i in tqdm(m_pool.imap_unordered(get_sparse_file_data, file_list), total=len(file_list)):
+    for i in tqdm(m_pool.imap_unordered(get_sparse_file_data, file_list),
+                  total=len(file_list)):
         all_functions.extend(i)
-
     '''
     for file_item in file_list:
 
@@ -118,10 +119,14 @@ def plot_clustering(all_functions, plot_it=False):
     scores = []
     clust_count = []
     labels = []
-    for x in range(2,50):
+    for x in range(2, 50):
         result = KMeans(n_clusters=x, random_state=2).fit(func_sparse)
 
-        score = silhouette_score(func_sparse, result.labels_, metric="cosine", random_state=2, sample_size=5000)
+        score = silhouette_score(func_sparse,
+                                 result.labels_,
+                                 metric="cosine",
+                                 random_state=2,
+                                 sample_size=5000)
         scores.append(score)
         clust_count.append(x)
         labels.append(result.labels_)
@@ -130,7 +135,7 @@ def plot_clustering(all_functions, plot_it=False):
 
     largest_dif = 200
     large_index = 0
-    for x in range(1,len(scores)-2):
+    for x in range(1, len(scores) - 2):
         if largest_dif > scores[x]:
             largest_dif = scores[x]
             large_index = x
@@ -139,7 +144,8 @@ def plot_clustering(all_functions, plot_it=False):
                 largest_dif = abs(scores[x] - scores[x+1])
                 large_index = x+1
         '''
-    print("Largest drop at {} with {}".format(clust_count[large_index], largest_dif))
+    print("Largest drop at {} with {}".format(clust_count[large_index],
+                                              largest_dif))
 
     if plot_it:
         plt.plot(clust_count, scores)
@@ -152,27 +158,33 @@ def plot_clustering(all_functions, plot_it=False):
 
 
 def single_cluster(all_functions, centroid_count=2):
-        vect, func_sparse = funcs_to_sparse(all_functions)
+    vect, func_sparse = funcs_to_sparse(all_functions)
 
-        transformer = Normalizer().fit(func_sparse)
+    transformer = Normalizer().fit(func_sparse)
 
-        func_sparse = transformer.transform(func_sparse)
+    func_sparse = transformer.transform(func_sparse)
 
-        # svd = TruncatedSVD(random_state=2)
-        # svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
+    # svd = TruncatedSVD(random_state=2)
+    # svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
 
-        # func_sparse = svd.fit_transform(func_sparse)
+    # func_sparse = svd.fit_transform(func_sparse)
 
-        labels = []
+    labels = []
 
-        result = KMeans(n_clusters=centroid_count, random_state=2).fit(func_sparse)
+    result = KMeans(n_clusters=centroid_count, random_state=2).fit(func_sparse)
 
-        score = silhouette_score(func_sparse, result.labels_, metric="cosine", random_state=2, sample_size=5000)
-        labels.append(result.labels_)
+    score = silhouette_score(func_sparse,
+                             result.labels_,
+                             metric="cosine",
+                             random_state=2,
+                             sample_size=5000)
+    labels.append(result.labels_)
 
-        print("Clusters {:<3} | Silhoette Score : {}".format(centroid_count, score))
+    print("Clusters {:<3} | Silhoette Score : {}".format(
+        centroid_count, score))
 
-        return result.labels_
+    return result.labels_
+
 
 def get_cosine_dist(all_functions):
     return_dict = {}
@@ -183,6 +195,7 @@ def get_cosine_dist(all_functions):
     func_sparse = transformer.transform(func_sparse)
 
     return cosine_distances(func_sparse, func_sparse)
+
 
 def get_single_cluster(all_functions, centroid_count=2):
     return_dict = {}
@@ -201,7 +214,11 @@ def get_single_cluster(all_functions, centroid_count=2):
 
     result = KMeans(n_clusters=centroid_count, random_state=2).fit(func_sparse)
 
-    score = silhouette_score(func_sparse, result.labels_, metric="cosine", random_state=2, sample_size=5000)
+    score = silhouette_score(func_sparse,
+                             result.labels_,
+                             metric="cosine",
+                             random_state=2,
+                             sample_size=5000)
     labels.append(result.labels_)
 
     #print("Clusters {:<3} | Silhoette Score : {}".format(centroid_count, score))
@@ -214,8 +231,7 @@ def get_single_cluster(all_functions, centroid_count=2):
 
 def remove_non_needed_functions(all_functions, remove_features=True):
 
-    bad_prefix = ["fcn.", "sub.", "loc.", "aav.",
-                  "sym._fini", "sym._init"]
+    bad_prefix = ["fcn.", "sub.", "loc.", "aav.", "sym._fini", "sym._init"]
 
     keep_functions = []
     for function in all_functions:
@@ -223,7 +239,9 @@ def remove_non_needed_functions(all_functions, remove_features=True):
             keep_functions.append(function)
 
     if remove_features:
-        bad_features = ['bits', 'calltype', 'maxbound', 'minbound', 'offset', 'size']
+        bad_features = [
+            'bits', 'calltype', 'maxbound', 'minbound', 'offset', 'size'
+        ]
         for function in keep_functions:
             for feat in bad_features:
                 try:
@@ -247,7 +265,7 @@ def test():
         with open(args.Load, 'rb') as f:
             all_functions = pickle.load(f)
     else:
-        executables,shared_libs = get_executable_files(args.Directory)
+        executables, shared_libs = get_executable_files(args.Directory)
 
         all_files = executables + shared_libs
 
@@ -258,11 +276,15 @@ def test():
                 pickle.dump(all_functions, f, -1)
 
     #Fix symbols 'n stuff
-    bad_prefix = ["fcn.", "sub.", "loc.", "aav.",
-        "sym._fini", "sym._init"]
-    all_functions = [x for x in all_functions if not any([y in x['name'] for y in bad_prefix])]
+    bad_prefix = ["fcn.", "sub.", "loc.", "aav.", "sym._fini", "sym._init"]
+    all_functions = [
+        x for x in all_functions
+        if not any([y in x['name'] for y in bad_prefix])
+    ]
 
-    bad_features = ['bits', 'calltype', 'maxbound', 'minbound', 'offset', 'size']
+    bad_features = [
+        'bits', 'calltype', 'maxbound', 'minbound', 'offset', 'size'
+    ]
     for func in all_functions:
         for feat in bad_features:
             func.pop(feat)
@@ -271,11 +293,12 @@ def test():
 
     file_names = [x['file_name'] for x in all_functions]
     func_names = [x['name'] for x in all_functions]
-    for x,y,z in zip(file_names, func_names, func_labels):
+    for x, y, z in zip(file_names, func_names, func_labels):
         x = x.split('/')[-1]
-        print("{} | {} | {}".format(x,y,z))
+        print("{} | {} | {}".format(x, y, z))
 
     IPython.embed()
+
 
 if __name__ == "__main__":
     test()

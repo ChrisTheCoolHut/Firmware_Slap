@@ -3,6 +3,8 @@ import os
 import signal
 import multiprocessing
 import time
+
+
 class Limited_Process:
     def __init__(self, proc, function, time_limit, mem_limit, proc_queue):
         self.proc = proc
@@ -21,7 +23,7 @@ class Limited_Process:
             return 0
         except AttributeError as e:
             psutil_proc = psutil.Process(os.getpid())
-            
+
         return psutil_proc.memory_info().rss / (1024 * 1024)
 
     def mem_overused(self):
@@ -43,12 +45,9 @@ class Limited_Process:
         except multiprocessing.queues.Empty as e:
             return "timeout"
         '''
-
-
     def die(self):
         try:
             os.kill(self.proc.pid, signal.SIGKILL)
         except:
             self.finished = True
         #self.proc.terminate()
-
