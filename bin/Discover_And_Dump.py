@@ -7,6 +7,7 @@ from firmware_slap import function_handler as fh
 from firmware_slap import firmware_clustering as fhc
 from firmware_slap import ghidra_handler as gh
 from firmware_slap import es_helper as eh
+from firmware_slap.ghidra_handler import print_function
 from termcolor import colored
 import hashlib
 import os
@@ -284,55 +285,6 @@ def get_small_function(func):
         ret_dict['prototype'] = func['HiFuncProto']
 
     return ret_dict
-
-
-def print_function(func):
-    prototype = func['HiFuncProto']
-    code = func['c_code']
-    file_name = func['file_name']
-    func_name = func['name']
-    bug = func['result']
-    bug_type = bug['type']
-    print(
-        colored("{} found in {} at {}".format(bug_type, file_name, func_name),
-                'red',
-                attrs=['bold']))
-
-    import re
-    print(colored(prototype, 'cyan', attrs=['bold']))
-    for arg in bug['args']:
-        data = arg['value']
-        data = re.sub('\\\\x[0-9][0-9]', '', data)
-        print(
-            colored("\t{} : {}".format(arg['base'], data),
-                    'white',
-                    attrs=['bold']))
-    if 'Injected_Location' in bug.keys():
-        print(colored("Injected Memory Location", 'cyan', attrs=['bold']))
-
-        data = bug['Injected_Location']['Data']
-        data = re.sub('\\\\x[0-9][0-9]', '', data)
-
-        print(colored("\t{}".format(data), 'white', attrs=['bold']))
-    print(colored("Tainted memory values", 'cyan', attrs=['bold']))
-    for mem_val in bug['mem']:
-        print(
-            colored("{}".format(mem_val['BBL_DESC']['DESCRIPTION']),
-                    'yellow',
-                    attrs=['bold']))
-        if 'DATA_ADDRS' in mem_val.keys():
-            print(
-                colored("\tMemory load addr {}".format(
-                    mem_val['DATA_ADDRS'][0]),
-                        'white',
-                        attrs=['bold']))
-        data = re.sub('\\\\x[0-9][0-9]', '', mem_val['DATA'])
-        print(
-            colored("\tMemory load value {}".format(data),
-                    'white',
-                    attrs=['bold']))
-        print()
-
 
 if __name__ == "__main__":
     main()
