@@ -211,7 +211,6 @@ def get_bugs_from_functions(arg_funcs, ld_path):
         else:
             args = fh.get_func_args(func)
 
-        ld_path="/home/chris/Tools/firmware_slap/Almond_Root/lib"
         async_task = async_trace_func.apply_async(args=[func['offset'],
                                                           args,
                                                           func['file_path'],
