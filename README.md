@@ -32,6 +32,9 @@ echo "export PATH=\$PATH:$PWD/ghidra/ghidra_9.0.4/support" >> ~/.bashrc
 If you want to use the Elastic search stuff run the `Elasticsearch_and_kibana.sh` script
 
 ## Quickstart
+
+Ensure rabbitmq-server is running.
+
 ```
 # In a Separate terminal
 celery -A firmware_slap.celery_tasks worker --loglevel=info
@@ -53,7 +56,7 @@ binwalk -Mre AL3-R024-64MB
 Start a celery work from the project root directory:
 ```
 # In a separate terminal
-$ celery -A lib.celery_tasks worker --loglevel=info
+celery -A firmware_slap.celery_tasks worker --loglevel=info
 ```
 
 In a different terminal window, run a vulnerability discovery job.
