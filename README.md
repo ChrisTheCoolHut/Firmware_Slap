@@ -42,7 +42,7 @@ If you want to use the Elastic search stuff run the `Elasticsearch_and_kibana.sh
 Ensure rabbitmq-server is running.
 
 ```bash
-# In a Separate terminal
+# In a Separate terminal, run this in the top level "Firmware_Slap" directory
 celery -A firmware_slap.celery_tasks worker --loglevel=info
 # Basic buffer overflow
 Discover_And_Dump.py examples/iwconfig -D iwconfig_results
