@@ -39,7 +39,7 @@ Ensure rabbitmq-server is running.
 # In a Separate terminal
 celery -A firmware_slap.celery_tasks worker --loglevel=info
 # Basic buffer overflow
-Discover_And_Dump.py examples/iwconfig
+Discover_And_Dump.py examples/iwconfig -D iwconfig_results
 # Command injection
 tar -xvf examples/Almond_libs.tar.gz
 Vuln_Discover_Celery.py examples/upload.cgi -L Almond_Root/lib/
