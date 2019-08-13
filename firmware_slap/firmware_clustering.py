@@ -4,9 +4,8 @@ import argparse
 import IPython
 from multiprocessing import Pool
 from tqdm import tqdm
-#from function_clustering import funcs_to_sparse, trim_funcs
-from .function_clustering import *
-from .function_handler import get_arg_funcs, get_function_information
+from firmware_slap.function_clustering import *
+from firmware_slap.function_handler import get_arg_funcs, get_function_information
 import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score
 from sklearn.feature_extraction import DictVectorizer
@@ -39,14 +38,13 @@ def get_executable_files(directory, progress=True):
         for filename in files:
             full_path = os.path.join(root, filename)
 
-            #if os.path.islink(full_path):
-            #    continue
+            if os.path.islink(full_path):
+                continue
 
             if os.path.isfile(full_path):
                 file_type = magic.from_file(full_path, mime=True)
 
-            if not os.path.islink(full_path):
-                file_hash = md5sum(full_path)
+            file_hash = md5sum(full_path)
 
             if file_hash not in hashes:
                 hashes.append(file_hash)

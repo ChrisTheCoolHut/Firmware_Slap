@@ -1,7 +1,7 @@
 import IPython
 import argparse
 from tqdm import tqdm
-from . import function_handler as fh
+from firmware_slap import function_handler as fh
 import matplotlib.pyplot as plt
 from sklearn.metrics import silhouette_score
 from sklearn.feature_extraction import DictVectorizer

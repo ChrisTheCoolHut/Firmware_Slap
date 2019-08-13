@@ -3,8 +3,8 @@ from angr import sim_options as so
 import claripy
 import argparse
 #import function_handler as fh
-from . import function_handler as fh
-from . import command_injection
+from firmware_slap import function_handler as fh
+from firmware_slap import command_injection
 from multiprocessing import Process, Queue
 #from multiprocessing.dummy import Process, Queue
 from .Limited_Process import Limited_Process
