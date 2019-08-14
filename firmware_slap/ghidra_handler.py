@@ -3,6 +3,8 @@ import tempfile
 import os
 import pickle
 import subprocess
+import re
+from termcolor import colored
 # analyzeHeadless . Project_test -import $1 -scriptPath ./ -preScript SetDecompilerOptions.py -postScript DumpFunctions.py "./Output_File"
 
 run_headless_command = "analyzeHeadless {} {} -max-cpu 1 -import {} -scriptPath {} -preScript {} -postScript {} \"{}\""
@@ -141,6 +143,10 @@ def print_function(func):
     file_name = func['file_name']
     func_name = func['name']
     bug = func['result']
+
+    if not func['result']:
+        return
+
     bug_type = bug['type']
     print(
         colored("{} found in {} at {}".format(bug_type, file_name, func_name),

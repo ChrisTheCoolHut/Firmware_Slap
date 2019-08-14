@@ -95,9 +95,9 @@ def dump_results(file_vulnerabilities, dump_path):
     json_path = dump_path + json_ext
 
     with open(pickle_path, 'wb') as f:
-        pickle.dump(file_vulnerabilities, f, -1)
+        pickle.dump(vulnerable_functions, f, -1)
     with open(json_path, 'w') as f:
-        json.dump(file_vulnerabilities, f)
+        json.dump(vulnerable_functions, f)
 
 
 def process_file_or_folder(file_path, ld_path):
