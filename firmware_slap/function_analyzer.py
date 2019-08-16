@@ -197,7 +197,7 @@ def do_trace(start_addr, args, file_name=None, ld_path=""):
     my_extra = angr.options.resilience.union(my_extras)
     p = angr.Project(file_name,
                      main_opts={'base_addr': base_addr},
-                     ld_path=ld_path.split(':')
+                     ld_path=ld_path.split(':'))
 
     #Hook for cmd inj
     system_list = [
