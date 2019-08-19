@@ -7,6 +7,7 @@ from firmware_slap.function_analyzer import *
 from firmware_slap.celery_tasks import *
 from firmware_slap import function_handler as fh
 from firmware_slap import firmware_clustering as fhc
+from firmware_slap.ghidra_handler import import print_function
 import Vuln_Discover_Celery as vd
 import copy
 
@@ -146,64 +147,6 @@ def get_function_index(file_vuln, all_functions):
                             func['file_name']):
                     return x
     return None
-
-
-def print_function(func):
-    prototype = func['HiFuncProto']
-    code = func['c_code']
-    file_name = func['file_name']
-    func_name = func['name']
-    bug = func['result']
-    bug_type = bug['type']
-    print(
-        colored("{} in {} at {}".format(bug_type, file_name, func_name),
-                'red',
-                attrs=['bold']))
-
-    import re
-    print(colored(prototype, 'cyan', attrs=['bold']))
-    for arg in bug['args']:
-        data = arg['value']
-        data = re.sub('\\\\x[0-9][0-9]', '', data)
-        print(
-            colored("\t{} : {}".format(arg['base'], data),
-                    'white',
-                    attrs=['bold']))
-    if 'Injected_Location' in bug.keys():
-        print(colored("Injected Memory Location", 'cyan', attrs=['bold']))
-
-        data = bug['Injected_Location']['Data']
-        data = re.sub('\\\\x[0-9][0-9]', '', data)
-
-        print(colored("\t{}".format(data), 'white', attrs=['bold']))
-    print(colored("Tainted memory values", 'cyan', attrs=['bold']))
-    for mem_val in bug['mem']:
-        print(
-            colored("{}".format(mem_val['BBL_DESC']['DESCRIPTION']),
-                    'yellow',
-                    attrs=['bold']))
-        print(
-            colored("\tMemory load addr {}".format(mem_val['DATA_ADDRS'][0]),
-                    'white',
-                    attrs=['bold']))
-        data = re.sub('\\\\x[0-9][0-9]', '', mem_val['DATA'])
-        print(
-            colored("\tMemory load value {}".format(data),
-                    'white',
-                    attrs=['bold']))
-        print()
-    if 'Similar_Funcs' in func.keys():
-        print(
-            colored("Similar Functions With Distances",
-                    'magenta',
-                    attrs=['bold']))
-        for sim_func in func['Similar_Funcs']:
-            loc_string = "{:<30} in {}".format(
-                sim_func['func_name'], sim_func['file_name'].split('/')[-1])
-            print(colored(loc_string, 'blue', attrs=['bold']))
-            dist_string = "\t> {}".format(sim_func['distance'])
-            print(colored(dist_string, 'white', attrs=['bold']))
-
 
 if __name__ == "__main__":
     main()
