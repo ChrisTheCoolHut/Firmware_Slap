@@ -89,8 +89,8 @@ def async_and_iter(async_function, async_list):
         async_funcs.append(n_task)
 
     bar = tqdm.tqdm(total=len(async_funcs))
-    while not all([x.ready() for x in async_funcs]):
-        done_count = len([x.ready() for x in async_funcs if x.ready()])
+    while not all([x.successful() or x.failed() for x in async_funcs]):
+        done_count = len([x.successful() or x.failed() for x in async_funcs if x.successful() or x.failed()])
         bar.update(done_count - bar.n)
         time.sleep(1)
     bar.close()
@@ -109,8 +109,8 @@ def async_and_iter_clusters(all_functions, max_centroid):
         async_funcs.append(n_task)
 
     #bar = tqdm.tqdm(total=len(async_funcs))
-    while not all([x.ready() for x in async_funcs]):
-        done_count = len([x.ready() for x in async_funcs if x.ready()])
+    while not all([x.successful() or x.failed() for x in async_funcs]):
+        done_count = len([x.successful() or x.failed() for x in async_funcs if x.successful() or x.failed()])
         done_list = check_iter_status(async_funcs, done_list)
         #bar.update(done_count - bar.n)
 

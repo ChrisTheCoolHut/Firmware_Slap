@@ -66,8 +66,7 @@ def main():
             result = lim_proc.get()
 
             #Process returned!
-            if result is not None and type(
-                    result) is not "str" and result is not "timeout":
+            if result is not None and not isinstance(result,str):
                 print("{} : {}".format(lim_proc.function['name'], result))
                 if "vulnerable" in result.stashes.keys():
                     path = result.stashes['vulnerable'][0]
@@ -113,7 +112,7 @@ def unravel(ptr, clarip, state):
             max_str_len = 150
             curr_len = 4
             string_val = state.se.eval(value_at, cast_to=bytes)
-            while string_val[-1] is not 0 and curr_len < max_str_len:
+            while string_val[-1] != 0 and curr_len < max_str_len:
                 value_at = state.memory.load(addr, curr_len)
                 string_val = state.se.eval(value_at, cast_to=bytes)
                 curr_len += 1
@@ -134,7 +133,7 @@ def unravel(ptr, clarip, state):
                 #try em out!
                 max_byte_len = 150
                 curr_len = 4
-                while end_val_solved[-1] is not 0 and curr_len < max_byte_len:
+                while end_val_solved[-1] != 0 and curr_len < max_byte_len:
                     end_val_deref_claripy = state.memory.load(
                         end_val_addr, curr_len)
                     end_val_solved = state.se.eval(end_val_deref_claripy,

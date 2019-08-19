@@ -28,7 +28,7 @@ def main():
 
 def import_list(es, index_name, nodes):
     for node in nodes:
-        import_item(es, indeX_name, node)
+        import_item(es, index_name, node)
 
 
 def import_item(es, index_name, node):

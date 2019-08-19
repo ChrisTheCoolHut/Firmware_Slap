@@ -137,8 +137,8 @@ def get_all_arg_funcs_async(file_list):
 
     bar = tqdm.tqdm(total=len(async_group),
                     desc="[~] Getting functions with arguments")
-    while not all([x.ready() for x in async_group]):
-        done_count = len([x.ready() for x in async_group if x.ready()])
+    while not all([x.successful() or x.failed() for x in async_group]):
+        done_count = len([x.successful() or x.failed() for x in async_group if x.successful() or x.failed()])
         bar.update(done_count - bar.n)
         time.sleep(1)
     bar.close()
@@ -158,8 +158,8 @@ def get_all_funcs_async(file_list):
 
     bar = tqdm.tqdm(total=len(async_group),
                     desc="[~] Getting functions with arguments")
-    while not all([x.ready() for x in async_group]):
-        done_count = len([x.ready() for x in async_group if x.ready()])
+    while not all([x.successful() or x.failed() for x in async_group]):
+        done_count = len([x.successful() or x.failed() for x in async_group if x.successful() or x.failed()])
         bar.update(done_count - bar.n)
         time.sleep(1)
     bar.close()

@@ -79,8 +79,7 @@ def main():
             result = lim_proc.get()
 
             #Process returned!
-            if result is not None and type(
-                    result) is not "str" and result is not "timeout":
+            if result is not None and not isinstance(result, str):
                 if "vulnerable" in result.stashes.keys():
                     print("[+] Memory Corruption {}".format(
                         lim_proc.function['name']))

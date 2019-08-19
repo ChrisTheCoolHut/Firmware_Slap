@@ -51,7 +51,7 @@ def main():
     m_pool.close()
     m_pool.join()
 
-    if args.Vuln_Pickle is "":
+    if args.Vuln_Pickle == "":
         cores = psutil.cpu_count() - 1
         mem_limit = (psutil.virtual_memory()[1] / (1024 * 1024)) / cores
 
@@ -144,8 +144,7 @@ def get_vulnerabilities(file_functions, cores=1, mem_limit=2048, ld_path=""):
             result = lim_proc.get()
 
             #Process returned!
-            if result is not None and type(
-                    result) is not "str" and result is not "timeout":
+            if result is not None and not isinstance(result,str):
                 print("{} {} : {}".format(lim_proc.function['file_name'],
                                           lim_proc.function['name'], result))
                 vuln_key = "{} : {}".format(lim_proc.function['file_name'],
