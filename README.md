@@ -10,10 +10,28 @@ Slides from the talk can be found [here](https://media.defcon.org/DEF%20CON%2027
 
 Firmware slap should be run in a virtual environment. It has been tested on Python3.6
 ```bash
-apt install python3-virtualenv
+sudo apt install python3-virtualenv
 virtualenv -p python3 fwslap
 source fwslap/bin/activate
 ```
+-- or --
+
+```bash
+cd ~
+mkdir .virtualenvs
+pip install virtualenv
+which virtualenv #note path warnings
+pip install virtualenvwrapper
+echo "export PATH=$PATH:~/.local/bin" >> ~/.bashrc
+echo "export WORKON_HOME=~/.virtualenvs" >> ~/.bashrc
+echo "source ~/.local/bin/virtualenvwrapper.sh" >> ~/.bashrc
+
+#usually best here to open new terminal
+
+mkvirtualenv fwslap -p /usr/bin/python3
+workon fwslap
+```
+
 
 ```bash
 python setup.py install
