@@ -10,7 +10,7 @@ setup(name='Firmware_Slap',
       url='https://github.com/ChrisTheCoolHut/Firmware_Slap',
       packages=['firmware_slap'],
       scripts=['bin/Vuln_Discover_Celery.py', 'bin/Vuln_Cluster_Celery.py',
-          'bin/Discover_And_Dump.py'],
+          'bin/Discover_And_Dump.py', 'bin/load_and_view_results.py'],
       include_package_data=True,
       install_requires=[
           "tqdm",

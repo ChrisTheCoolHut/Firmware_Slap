@@ -13,10 +13,10 @@ Firmware slap should be run in a virtual environment. It has been tested on Pyth
 python setup.py install
 ```
 
-You will need rabbitmq and (radare2 or Ghidra)
+You will need rabbitmq, docker, and (radare2 or Ghidra)
 ```bash
 # Ubuntu
-sudo apt install rabbitmq-server
+sudo apt install rabbitmq-server docker.io
 # OSX
 brew install rabbitmq
 
