@@ -46,6 +46,16 @@ Ensure rabbitmq-server is running.
 celery -A firmware_slap.celery_tasks worker --loglevel=info
 # Basic buffer overflow
 Discover_And_Dump.py examples/iwconfig -D iwconfig_results
+Load_And_View_Results.py iwconfig_results.all.pickle
+
+# Click management on the left pane
+# Click Saved Objects
+# Click Import
+# Select 'elastic_export.json' under the elastic directory in firmware slap
+# Navigate to dashboards on left pane and select 'Overview Dashboard'
+
+Load_And_View_Results.py iwconfig_results.all.pickle -s
+
 # Command injection
 tar -xvf examples/Almond_libs.tar.gz
 Vuln_Discover_Celery.py examples/upload.cgi -L Almond_Root/lib/
