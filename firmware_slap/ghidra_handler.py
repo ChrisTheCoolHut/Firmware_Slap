@@ -55,8 +55,8 @@ def run_dump_functions(dirpath, base_name, file_name, script_path,
 
     exit_code = subprocess.call(dump_cmd,
                                 shell=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL)
 
     #if os.path.exists(output_file_path):
     #    print("Success!")
@@ -136,55 +136,4 @@ def get_arg_funcs(file_name, useHiFunc=True):
             x for x in get_function_information(file_name)
             if len(x) > 0 and x['ParameterCount'] > 0
         ]
-
-def print_function(func):
-    prototype = func['HiFuncProto']
-    code = func['c_code']
-    file_name = func['file_name']
-    func_name = func['name']
-    bug = func['result']
-
-    if not func['result']:
-        return
-
-    bug_type = bug['type']
-    print(
-        colored("{} found in {} at {}".format(bug_type, file_name, func_name),
-                'red',
-                attrs=['bold']))
-
-    import re
-    print(colored(prototype, 'cyan', attrs=['bold']))
-    for arg in bug['args']:
-        data = arg['value']
-        data = re.sub('\\\\x[0-9][0-9]', '', data)
-        print(
-            colored("\t{} : {}".format(arg['base'], data),
-                    'white',
-                    attrs=['bold']))
-    if 'Injected_Location' in bug.keys():
-        print(colored("Injected Memory Location", 'cyan', attrs=['bold']))
-
-        data = bug['Injected_Location']['Data']
-        data = re.sub('\\\\x[0-9][0-9]', '', data)
-
-        print(colored("\t{}".format(data), 'white', attrs=['bold']))
-    print(colored("Tainted memory values", 'cyan', attrs=['bold']))
-    for mem_val in bug['mem']:
-        print(
-            colored("{}".format(mem_val['BBL_DESC']['DESCRIPTION']),
-                    'yellow',
-                    attrs=['bold']))
-        if 'DATA_ADDRS' in mem_val.keys():
-            print(
-                colored("\tMemory load addr {}".format(
-                    mem_val['DATA_ADDRS'][0]),
-                        'white',
-                        attrs=['bold']))
-        data = re.sub('\\\\x[0-9][0-9]', '', mem_val['DATA'])
-        print(
-            colored("\tMemory load value {}".format(data),
-                    'white',
-                    attrs=['bold']))
-        print()
 

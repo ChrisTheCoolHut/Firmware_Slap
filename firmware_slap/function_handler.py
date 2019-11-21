@@ -2,6 +2,7 @@ import r2pipe
 import argparse
 import IPython
 from tqdm import tqdm
+from termcolor import colored
 
 
 def get_function_information(file_name):
@@ -45,6 +46,64 @@ def get_func_args(func):
         elif 'arg' in var['name'] and 'reg' in var['kind']:
             arg_list.append(var)
     return arg_list
+
+def print_function(func):
+
+    is_ghidra = False 
+
+    # Function is a ghidra one
+    if 'HiFuncProto' in func.keys():
+        is_ghidra = True
+        prototype = func['HiFuncProto']
+        code = func['c_code']
+    file_name = func['file_name']
+    func_name = func['name']
+    bug = func['result']
+
+    if not func['result']:
+        return
+
+    bug_type = bug['type']
+    print(
+        colored("{} found in {} at {}".format(bug_type, file_name, func_name),
+                'red',
+                attrs=['bold']))
+
+    import re
+    if is_ghidra:
+        print(colored(prototype, 'cyan', attrs=['bold']))
+    for arg in bug['args']:
+        data = arg['value']
+        # data = re.sub('\\\\x[0-9][0-9]', '', data)
+        print(
+            colored("\t{} : {}".format(arg['base'], data),
+                    'white',
+                    attrs=['bold']))
+    if 'Injected_Location' in bug.keys():
+        print(colored("Injected Memory Location", 'cyan', attrs=['bold']))
+
+        data = bug['Injected_Location']['Data']
+        # data = re.sub('\\\\x[0-9][0-9]', '', data)
+
+        print(colored("\t{}".format(data), 'white', attrs=['bold']))
+    print(colored("Tainted memory values", 'cyan', attrs=['bold']))
+    for mem_val in bug['mem']:
+        print(
+            colored("{}".format(mem_val['BBL_DESC']['DESCRIPTION']),
+                    'yellow',
+                    attrs=['bold']))
+        if 'DATA_ADDRS' in mem_val.keys():
+            print(
+                colored("\tMemory load addr {}".format(
+                    mem_val['DATA_ADDRS'][0]),
+                        'white',
+                        attrs=['bold']))
+        # data = re.sub('\\\\x[0-9][0-9]', '', mem_val['DATA'])
+        print(
+            colored("\tMemory load value {}".format(data),
+                    'white',
+                    attrs=['bold']))
+        print()
 
 
 def test():

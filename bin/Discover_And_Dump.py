@@ -7,7 +7,7 @@ from firmware_slap import function_handler as fh
 from firmware_slap import firmware_clustering as fhc
 from firmware_slap import ghidra_handler as gh
 from firmware_slap import es_helper as eh
-from firmware_slap.ghidra_handler import print_function
+from firmware_slap.function_handler import print_function
 from termcolor import colored
 import hashlib
 import os
@@ -17,6 +17,7 @@ import json
 #angr logging is way too verbose
 import logging
 import tqdm
+import time
 log_things = ["angr", "pyvex", "claripy", "cle"]
 for log in log_things:
     logger = logging.getLogger(log)
@@ -31,8 +32,13 @@ pickle_ext = ".pickle"
 json_ext = ".json"
 all_func_ext = ".all"
 
+function_timeout = 60
+function_memory_limit = 2048000
 
 def main():
+
+    global function_timeout
+    global use_ghidra
 
     parser = argparse.ArgumentParser()
 
@@ -54,6 +60,15 @@ def main():
                         default=False,
                         help="Delete elastic index",
                         action="store_true")
+    parser.add_argument("--use_radare2",
+                        dest="use_ghidra",
+                        default=True,
+                        action="store_false",
+                        help="Use radare2 instead of ghidra for analysis")
+    parser.add_argument("--function_timeout", "-ft",
+            default=function_timeout,
+            type=int,
+            help="Default analysis timeout per function : {}".format(function_timeout))
 
     args = parser.parse_args()
 
@@ -65,6 +80,11 @@ def main():
     if use_elastic:
         eh.build_index(es, eh.vulnerability_index, args.delete_index)
         eh.build_index(es, eh.function_index, args.delete_index)
+
+    function_timeout = args.function_timeout
+
+    use_ghidra = args.use_ghidra
+
 
     file_vulnerabilities = process_file_or_folder(args.FILE, args.LD_PATH)
 
@@ -115,7 +135,8 @@ def get_vulnerabilities_directory(folder_name, ld_path):
 
     executables, shared_libs = fhc.get_executable_files(folder_name)
 
-    all_files = executables + shared_libs
+    # all_files = executables + shared_libs
+    all_files = executables
 
     #function_lists = get_all_arg_funcs_async(all_files)
     function_lists = get_all_funcs_async(all_files)
@@ -133,10 +154,6 @@ def get_vulnerabilities_directory(folder_name, ld_path):
 def fix_functions(all_arg_funcs):
     exclude_list = []
     for func in all_arg_funcs:
-
-        func_name = None
-        if "name" in func.keys():
-            func_name = func['name']
 
         func['file_path'] = func['file_name']
         func['file_name'] = os.path.basename(func['file_name'])
@@ -172,7 +189,10 @@ def get_all_arg_funcs_async(file_list):
     bar = tqdm.tqdm(total=len(async_group),
                     desc="[~] Getting functions with arguments")
     while not all([x.successful() or x.failed() for x in async_group]):
-        done_count = len([x.successful() or x.failed() for x in async_group if x.successful() or x.failed()])
+        done_count = len([
+            x.successful() or x.failed() for x in async_group
+            if x.successful() or x.failed()
+        ])
         bar.update(done_count - bar.n)
         time.sleep(1)
     bar.close()
@@ -193,7 +213,10 @@ def get_all_funcs_async(file_list):
     bar = tqdm.tqdm(total=len(async_group),
                     desc="[~] Getting functions with arguments")
     while not all([x.successful() or x.failed() for x in async_group]):
-        done_count = len([x.successful() or x.failed() for x in async_group if x.successful() or x.failed()])
+        done_count = len([
+            x.successful() or x.failed() for x in async_group
+            if x.successful() or x.failed()
+        ])
         bar.update(done_count - bar.n)
         time.sleep(1)
     bar.close()
@@ -213,8 +236,8 @@ def get_bugs_from_functions(arg_funcs, ld_path):
             args=[
                 func['offset'], args, func['file_path'], ld_path, func['name']
             ],
-            time_limit=60,
-            worker_max_memory_per_child=2048000)
+            time_limit=function_timeout,
+            worker_max_memory_per_child=function_memory_limit)
         func['task'] = async_task
         func['posted_results'] = False
 
@@ -285,6 +308,7 @@ def get_small_function(func):
         ret_dict['prototype'] = func['HiFuncProto']
 
     return ret_dict
+
 
 if __name__ == "__main__":
     main()

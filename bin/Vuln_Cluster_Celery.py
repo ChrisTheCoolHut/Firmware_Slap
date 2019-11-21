@@ -7,7 +7,7 @@ from firmware_slap.function_analyzer import *
 from firmware_slap.celery_tasks import *
 from firmware_slap import function_handler as fh
 from firmware_slap import firmware_clustering as fhc
-from firmware_slap.ghidra_handler import print_function
+from firmware_slap.function_handler import print_function
 import Vuln_Discover_Celery as vd
 import copy
 

@@ -13,15 +13,17 @@ import os
 import pickle
 
 #angr logging is way too verbose
+import argparse
 import logging
 import tqdm
+import time
 log_things = ["angr", "pyvex", "claripy", "cle"]
 for log in log_things:
     logger = logging.getLogger(log)
     logger.disabled = True
     logger.propagate = False
 
-use_ghidra = True
+use_ghidra = False 
 use_elastic = False
 es = None
 
@@ -99,10 +101,6 @@ def get_vulnerabilities_directory(folder_name, ld_path):
 def fix_functions(all_arg_funcs):
     exclude_list = []
     for func in all_arg_funcs:
-
-        func_name = None
-        if "name" in func.keys():
-            func_name = func['name']
 
         func['file_path'] = func['file_name']
         func['file_name'] = os.path.basename(func['file_name'])
