@@ -99,10 +99,10 @@ def print_function(func):
                         'white',
                         attrs=['bold']))
         # data = re.sub('\\\\x[0-9][0-9]', '', mem_val['DATA'])
-        print(
-            colored("\tMemory load value {}".format(data),
-                    'white',
-                    attrs=['bold']))
+        # print(
+        #    colored("\tMemory load value {}".format(data),
+        #            'white',
+        #            attrs=['bold']))
         print()
 
 
