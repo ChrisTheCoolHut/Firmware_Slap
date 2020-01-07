@@ -352,6 +352,7 @@ def process(proj, simgr):
         path = simgr.stashes['vulnerable'][0]
 
         return_dict['type'] = "Memory Corruption"
+        return_dict['ADDR_TRACE'] = [x for x in path.history.bbl_addrs]
 
         return_dict['args'] = []
         for x, y, z in path.globals['args']:
@@ -371,6 +372,7 @@ def process(proj, simgr):
             simgr.stashes['exploitable']) > 0:
         path = simgr.stashes['exploitable'][0]
         return_dict['type'] = "Command Injection"
+        return_dict['ADDR_TRACE'] = [x for x in path.history.bbl_addrs]
 
         val_loc = path.globals['val_offset']
         val_addr = path.globals['val_addr']
