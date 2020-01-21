@@ -42,7 +42,7 @@ def main():
 
     es = Elasticsearch()
 
-    time.sleep(10)
+    wait_until_reachable(es)
 
     create_index(es, func_index, True)
     create_index(es, vuln_index, True)
@@ -116,6 +116,17 @@ def create_index(es, index_name, delete_if_exists=False):
 
     if not es.indices.exists(index_name):
         es.indices.create(index=index_name, body=req_body)
+
+
+def wait_until_reachable(es):
+    if not es.ping():
+        print("Waiting for Elasticsearch to become reachable")
+        for count in range(6):
+            time.sleep(10)
+            if es.ping():
+                return
+        print("Error: Elasticsearch is unreachable")
+        exit(1)
 
 
 if __name__ == "__main__":
