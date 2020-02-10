@@ -3,9 +3,7 @@ from celery import Celery
 
 from firmware_slap.function_analyzer import *
 from firmware_slap.celery_tasks import *
-from firmware_slap import function_handler as fh
 from firmware_slap import firmware_clustering as fhc
-from firmware_slap import ghidra_handler as gh
 from firmware_slap import es_helper as eh
 from firmware_slap.function_handler import print_function
 from termcolor import colored
@@ -24,7 +22,6 @@ for log in log_things:
     logger.disabled = True
     logger.propagate = False
 
-use_ghidra = True
 use_elastic = False
 es = None
 
@@ -35,10 +32,11 @@ all_func_ext = ".all"
 function_timeout = 60
 function_memory_limit = 2048000
 
+fh = None
+
 def main():
 
     global function_timeout
-    global use_ghidra
 
     parser = argparse.ArgumentParser()
 
@@ -83,8 +81,13 @@ def main():
 
     function_timeout = args.function_timeout
 
-    use_ghidra = args.use_ghidra
-
+    global fh
+    if args.use_ghidra:
+        from firmware_slap import ghidra_handler
+        fh = ghidra_handler
+    else:
+        from firmware_slap import function_handler
+        fh = function_handler
 
     file_vulnerabilities = process_file_or_folder(args.FILE, args.LD_PATH)
 
@@ -227,11 +230,8 @@ def get_all_funcs_async(file_list):
 def get_bugs_from_functions(arg_funcs, ld_path):
 
     for func in arg_funcs:
-        if use_ghidra:
-            args = gh.get_func_args(func)
-        else:
-            args = fh.get_func_args(func)
-
+        args = fh.get_func_args(func)
+        
         async_task = async_trace_func.apply_async(
             args=[
                 func['offset'], args, func['file_path'], ld_path, func['name']
@@ -282,10 +282,10 @@ def check_bugs(arg_funcs):
 
 def get_vulnerabilities(file_name, ld_path):
     print("[+] Recovering Function Prototypes")
-    if use_ghidra:
-        arg_funcs = gh.get_function_information(file_name)
-    else:
-        arg_funcs = fh.get_arg_funcs(file_name)
+    try:
+        arg_funcs = fh.get_function_information(file_name)
+    except AttributeError:
+        arg_funcs = fh.get_arg_funcs(file_name) 
     for func in arg_funcs:
         func['file_name'] = file_name
 

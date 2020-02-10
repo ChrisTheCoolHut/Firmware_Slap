@@ -4,9 +4,7 @@ from celery import Celery
 
 from firmware_slap.function_analyzer import *
 from firmware_slap.celery_tasks import *
-from firmware_slap import function_handler as fh
 from firmware_slap import firmware_clustering as fhc
-from firmware_slap import ghidra_handler as gh
 from firmware_slap import es_helper as eh
 import hashlib
 import os
@@ -26,7 +24,7 @@ for log in log_things:
 use_ghidra = False 
 use_elastic = False
 es = None
-
+fh = None
 
 def main():
 
@@ -62,6 +60,14 @@ def main():
         eh.build_index(es, eh.vulnerability_index, args.delete_index)
         eh.build_index(es, eh.function_index, args.delete_index)
 
+    global fh
+    if use_ghidra:
+        from firmware_slap import ghidra_handler
+        fh = ghidra_handler
+    else:
+        from firmware_slap import function_handler as fh
+        fh = function_handler
+     
     file_vulnerabilities = process_file_or_folder(args.FILE, args.LD_PATH)
 
     with open(args.DUMP_PATH, 'wb') as f:
@@ -168,10 +174,7 @@ def get_all_funcs_async(file_list):
 def get_bugs_from_functions(arg_funcs, ld_path):
 
     for func in arg_funcs:
-        if use_ghidra:
-            args = gh.get_func_args(func)
-        else:
-            args = fh.get_func_args(func)
+        args = fh.get_func_args(func)
 
         async_task = async_trace_func.apply_async(
             args=[
@@ -228,7 +231,7 @@ def check_bugs(arg_funcs):
 def get_vulnerabilities(file_name, ld_path):
     print("[+] Getting argument functions")
     if use_ghidra:
-        arg_funcs = gh.get_function_information(file_name)
+        arg_funcs = fh.get_function_information(file_name)
     else:
         arg_funcs = fh.get_arg_funcs(file_name)
     for func in arg_funcs:
