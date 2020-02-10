@@ -2,9 +2,7 @@ from celery import Celery
 
 from firmware_slap.function_analyzer import *
 from firmware_slap.celery_tasks import *
-from firmware_slap import function_handler as fh
 from firmware_slap import firmware_clustering as fhc
-from firmware_slap import ghidra_handler as gh
 from firmware_slap import es_helper as eh
 from firmware_slap.function_handler import print_function
 import hashlib
@@ -220,13 +218,15 @@ def check_files(task_list, done_list):
 
 
 def get_bugs_from_functions(arg_funcs, ld_path):
-
+    fh = None
+    if use_ghidra:
+        from firmware_slap import ghidra_handler
+        fh = ghidra_handler
+    else:
+        from firmware_slap import function_handler
+        fh = function_handler
     for func in arg_funcs:
-        if use_ghidra:
-            args = gh.get_func_args(func)
-        else:
-            args = fh.get_func_args(func)
-
+        args = fh.get_func_args(func)
         async_task = async_trace_func.apply_async(
             args=[
                 func['offset'], args, func['file_path'], ld_path, func['name']
