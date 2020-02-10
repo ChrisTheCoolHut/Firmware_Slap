@@ -282,7 +282,10 @@ def check_bugs(arg_funcs):
 
 def get_vulnerabilities(file_name, ld_path):
     print("[+] Recovering Function Prototypes")
-    arg_funcs = fh.get_function_information(file_name)
+    try:
+        arg_funcs = fh.get_function_information(file_name)
+    except AttributeError:
+        arg_funcs = fh.get_arg_funcs(file_name) 
     for func in arg_funcs:
         func['file_name'] = file_name
 
