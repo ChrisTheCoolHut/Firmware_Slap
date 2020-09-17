@@ -65,7 +65,7 @@ def main():
         from firmware_slap import ghidra_handler
         fh = ghidra_handler
     else:
-        from firmware_slap import function_handler as fh
+        from firmware_slap import function_handler
         fh = function_handler
      
     file_vulnerabilities = process_file_or_folder(args.FILE, args.LD_PATH)
