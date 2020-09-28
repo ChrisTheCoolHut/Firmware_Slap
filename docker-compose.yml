@@ -1,0 +1,78 @@
+version: "3.7"
+services:
+  rabbit:
+    image: rabbitmq:3.8
+    networks:
+      - fw-net
+  # celery:
+  #   image: celery:4
+  #   networks:
+  #     - fw-net
+  #   command: celery -A firmware_slap.celery_tasks worker --loglevel=info
+  fwslap:
+    build:
+      context: "."
+      dockerfile: "Dockerfile"
+    image: fwslap
+    networks:
+      - fw-net
+    volumes:
+      - "${PWD}:/fwslap"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    command: ["sleep","inf"]
+
+#   redis:
+#     build: 
+#       context: "./redis"
+#       dockerfile: "Dockerfile"
+#     image: "sec-srv:9005/redis:5.0-alpine"
+#     restart: always
+#     ports:
+#       - "127.0.0.1:6379:6379"
+#     networks:
+#       - inner
+#     volumes:
+#       - "/data/redis:/data"
+#     # command: ["--appendonly","yes"] # no need to save to disk
+#   monitor:
+#     build: 
+#       context: ./monitor
+#       dockerfile: Dockerfile
+#       args:
+#         SENTRYEYE_DBUG: 1
+#       network: host
+#     image: sec-srv:9005/sentryeye_monitor:dev
+#     depends_on: 
+#       - redis
+#     network_mode: "host"
+#     restart: always
+#     volumes:
+#       - "/data:/data"
+# #      - "./monitor:/SentryEye"
+#     env_file:
+#       - sentryeye.env
+#     # environment:
+#     #   - SENTRYEYE_DBUG=0
+#     #   - MAX_trimmed_SPACE=1G
+#     #   - MAX_RAW_SPACE=2G
+#     # command: ["/bin/sleep","10000000"]
+#     command: ["/usr/bin/python3","/SentryEye/SentryEyeDaemon.py"]
+#     privileged: true
+
+  # capture:
+  #   build:
+  #     context: "./capture"
+  #     dockerfile: "Dockerfile"
+  #   image: sec-srv:9005/sentryeye_capture:dev
+  #   network_mode: "host"
+  #   restart: always
+  #   depends_on:
+  #    - monitor
+  #   env_file:
+  #     - sentryeye.env
+  #   volumes:
+  #     - "/data:/data"
+  #   privileged: true
+
+networks:
+  fw-net:
